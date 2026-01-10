@@ -29,6 +29,10 @@ body {
     padding: 5px;
 }
 
+.objects {
+    margin-left: 15px;
+}
+
 .circle {
     width: 14px;
     height: 14px;
@@ -102,26 +106,62 @@ body {
     
 
 <div class="h4">HELLO THERE! <br> This is your lucky day! Welcome on board!</div><div>I am engineer and this is my sandbox! 
-Here you can see some texts, images, code snippets and etc.</div><div>
+Here you can see some texts, images, apps and etc.</div><div>
+
+<div class="h4">Database</div>
+
+<div class="object">
+
+<span class="name"></span><div class="objects" style="
+">
+    <div class="object">
+       
+<div class="name dblclick to-id--expand-collapse">category</div>
+       <div class="objects hidden">
+<div class="object">space</div><div class="object">time</div><div class="object">energy</div>
+<div class="object">bio</div><div class="object">design</div><div class="object">abstraction</div><div class="object">compression</div><div class="object">minimal</div><div class="object">connection berween words</div><div class="object">find new ideas</div><div class="object">record from radio, youtube</div><div class="object">mutation and mutable</div><div class="object">automate routine on job</div></div>
+</div><div class="object">
+       <div class="name">computer science</div>
+       <div class="objects hidden"><div class="object">
+       <div class="name">infastructure</div>
+       <div class="objects"><div class="object">aws</div><div class="object">kubernetes</div></div>
+</div><div class="object">
+       
+<div class="name">db</div>
+       <div class="objects">
+<div class="object">postgres
+</div><div class="object">redis
+</div>
+</div>
+</div><div class="object">grasp</div><div class="object">solid</div><div class="object">aws</div><div class="object">rabbitmq</div><div class="object">kafka</div><div class="object">node.js</div><div class="object">nest.js</div><div class="object">javascript</div><div class="object">typescript</div></div>
+</div><div class="object">
+       
+<div class="name">movies</div>
+       <div class="objects">
+<div class="object">the dark knight (2008)</div><div class="object">the godfather (1972)</div><div class="object">the shawshank redemption (1994)</div>
+<div class="object">12 angry men (1957)</div></div>
+</div>
+
+<div class="object">
+       <div class="name">music</div>
+       
+<div class="objects">
+<div class="object">12 stones</div>
+<div class="object">2-4 grooves</div><div class="object">3 doors down</div><div class="object">30 seconds to mars</div><div class="object">36 crazyfists</div><div class="object">3rd strike</div></div></div></div></div>
+
+
+
+</div><div class="frame row">
 
     
 
-<div class="h4">Random notes</div><div contenteditable="plaintext-only" style="
-">space, time, energy, bio, design, music, movie, abstractions, compression, minimal,  
-запись, воспроизведение, связи между словами, 
-находить другие идеи, запись с ютуба или радио, mutation and mutable, 
-
-неудобства в тех окружении на работе,
-автоматизация повторений,</div></div><div>
-
-    
-
-<div class="h4">Tree of words</div></div><div>
-
-    
-
-<div class="h4">Dictionary of mad people</div><div contenteditable="plaintext-only" style="
-">solid, grasp, dry<br>aws, kubernetes, rabbitmq, kafka, postgres, redis, nodejs, nest.js, javascript, typescript </div></div><div class="frame" style="
+<div>expand-collapse</div><div contenteditable="plaintext-only" style="
+" class="code frame js-fn" id="expand-collapse">(x) =&gt; {
+  x.f = (target) =&gt; {
+     console.log('expand-collapse')
+    //if (target) target.classList.toggle('hidden')
+  }
+}</div></div><div class="frame" style="
     background: #f6fcf0;
     width: fit-content;
 ">
@@ -162,6 +202,10 @@ body {
     padding: 5px;
 }
 
+.objects {
+    margin-left: 15px;
+}
+
 .circle {
     width: 14px;
     height: 14px;
@@ -197,7 +241,21 @@ body {
 .hidden {
     display: none;
 }
-</div></div><div contenteditable="plaintext-only" style="
+</div></div><div class="frame" style="
+    background: #f6fcf0;
+    width: fit-content;
+">
+
+    
+
+<div>javascript. init script</div>
+<div class="triangle click to-id--show-hide"></div>
+<div contenteditable="plaintext-only" style="
+    border: 1px solid;
+    width: fit-content;
+    padding: 5px;
+    margin-top: 10px;
+" class="code hidden"><br></div></div><div contenteditable="plaintext-only" style="
     border: 1px solid;
     width: fit-content;
     /* font-family: monospace; */
@@ -249,23 +307,40 @@ window.addEventListener('click', (e) =&gt; {
   const classList = t.classList
   if (!classList.contains('click')) return
 
-  let idStr
+  let id
   for (const cls of classList) {
     if (cls.startsWith('to-id--')) {
-      idStr = cls
+      id = extractValue(cls)
+      break
     }
   }
 
-  if (!idStr) return
-  const el = document.getElementById(extractValue(idStr))
+  if (!id) return
+  const el = document.getElementById(id)
+  if (el.f) el.f(t)
+})
 
-  if (el.f) el.f(t.nextElementSibling)
+window.addEventListener('dblclick', (e) =&gt; {
+  const t = e.target
+  const classList = t.classList
+  if (!t.classList.contains('dblclick')) return
+
+  x('class-processor', t)
 })
 </div><div class="frame row">
 
+    <div class="circle click to-id--insert"></div><div>class processor</div>
+
+<div class="logs-container"></div><div contenteditable="plaintext-only" style="
+" class="code frame js-fn" id="class-processor">(x) =&gt; {
+  x.f = (domElement) =&gt; {
+    console.log(domElement)  
+  }
+}</div></div><div class="frame row">
+
     <div class="circle click to-id--insert"></div><div>console</div>
 
-<div>~add textadd text<div>ttt iii<div></div></div></div><div contenteditable="plaintext-only" style="
+<div class="logs-container"></div><div contenteditable="plaintext-only" style="
 " class="code frame js-fn" id="console">(x) =&gt; {
   const el = x.parentNode.children[2]
 
@@ -286,12 +361,7 @@ window.addEventListener('click', (e) =&gt; {
 
 
 
-    <div style="
-    width: 14px;
-    height: 14px;
-    border: 1px solid;
-    border-radius: 14px;
-" class="click to-id--insert"></div>
+    
 
 
 
