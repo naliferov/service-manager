@@ -1,3 +1,4 @@
 token
 updates.json
-**/worker.log
+workers/*/worker.log
+workers/*/pid
