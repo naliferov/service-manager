@@ -45,10 +45,18 @@ export const getProcessList = () => {
 }
 
 export const processKill = (pid) => {
+
+  const { promise, resolve, reject } = Promise.withResolvers()
+
   const child = spawn('kill', [pid])
   child.on('close', (code) => {
-    console.log(`Process ${pid} killed with code ${code}`)
+    if (code === 0) {
+      resolve()
+    } else {
+      reject(new Error(`Process ${pid} killed with code ${code}`))
+    }
   })
+  return promise
 }
 
 export const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))

@@ -41,50 +41,75 @@ const runWorker = async(worker) => {
   return pid
 }
 
+const runWorkerIfNotActive = async (worker, pid) => {
+
+  const path = `workers/${worker}`
+
+  if (pid) {
+    let str = `pid [${pid}]`
+
+    if (await isProcessActive(pid)) {
+      str += ` active`
+    } else {
+      str += ` not active. start [${worker}]`
+
+      const newPid = await runWorker(worker)
+      str += ` pid [${newPid}] started`
+      await fs.writeFile(`${path}/pid`, newPid)
+    }
+
+    log(str)
+    return
+  }
+
+  log(`pid not found. start [${worker}]`)
+  const newPid = await runWorker(worker)
+  log(` pid [${newPid}]`)
+  await fs.writeFile(`${path}/pid`, newPid)
+}
+
+const stopWorkerIfActive = async (worker, pid) => {
+  if (!pid) {
+    log(`pid not found. ok`)
+    return
+  }
+
+  const path = `workers/${worker}`
+
+  let processIsActive = await isProcessActive(pid)
+  if (!processIsActive) {
+    log(`proc [${pid}] not active. ok`)
+    return
+  }
+
+  log(`proc [${pid}] active. try to stop it`)
+  await processKill(pid)
+
+  processIsActive = await isProcessActive(pid)
+  if (!processIsActive) {
+    log(`proc [${pid}] stopped`)
+    await fs.unlink(`${path}/pid`)
+    log(`remove pid [${pid}]`)
+    return
+  }
+}
+
 const processWorker = async (worker) => {
   log(`[${worker}] worker`)
 
-  const path = `workers/${worker}`
   const enabled = await isWorkerEnabled(worker)
   const pid = await getWorkerPid(worker)
 
   if (enabled) {
     log(`is enabled`)
-
-    if (pid) {
-      let str = `pid [${pid}]`
-      if (await isProcessActive(pid)) str += ` active`
-      else {
-        str += ` not active. start [${worker}]`
-
-        const pid = await runWorker(worker)
-        if (pid) {
-          str += ` pid [${pid}] started`
-          await fs.writeFile(`${path}/pid`, pid.toString())
-        }
-      }
-      log(str)
-    } else {
-
-      log(`pid not found. so start [${worker}]`)
-      const pid = await runWorker(worker)
-      if (pid) {
-        log(` pid [${pid}]`)
-        await fs.writeFile(`${path}/pid`, pid)
-      }
-    }
-
+    await runWorkerIfNotActive(worker, pid)
     log('\n', true)
     return
   }
 
-
   log(`is disabled`)
-  // check that pid not in list
-
-  // find pid, check if process is running
-  //runWorker(worker)
-
+  await stopWorkerIfActive(worker, pid)
+  
   log('\n', true)
 }
 
