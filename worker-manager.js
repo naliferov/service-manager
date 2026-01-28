@@ -2,6 +2,29 @@ import fs from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { getProcessList, processKill, wait, getTime, log } from './utils.js'
 
+//workers path from command like arguments
+
+export const createWorkerManager = () => {
+
+  const run = async() => {
+    while (true) {
+      await processWorkers()
+      await wait(4000)
+    }
+  }
+
+  return {
+    run,
+  }
+}
+
+
+const workersPath = process.argv[2]
+if (!workersPath) {
+  console.error('workers path is required')
+  process.exit(1)
+}
+
 const getWorkerPid = async (worker) => {
   const path = `workers/${worker}`
   try {
