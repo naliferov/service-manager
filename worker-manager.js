@@ -2,42 +2,21 @@ import fs from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { getProcessList, processKill, wait, getTime, log } from './utils.js'
 
-//workers path from command like arguments
-
-export const createWorkerManager = () => {
-
-  const run = async() => {
-    while (true) {
-      await processWorkers()
-      await wait(4000)
-    }
-  }
-
-  return {
-    run,
-  }
-}
-
-
-const workersPath = process.argv[2]
-if (!workersPath) {
-  console.error('workers path is required')
-  process.exit(1)
-}
-
-const getWorkerPid = async (worker) => {
-  const path = `workers/${worker}`
+const getWorkerPid = async (workerPath) => {
   try {
-    const pid = await fs.readFile(`${path}/pid`, 'utf8')
+    const pid = await fs.readFile(`${workerPath}/pid`, 'utf8')
     if (pid) return pid.trim()
   } catch (error) {
     if (error.code !== 'ENOENT') throw error
   }
 }
 
-const isWorkerEnabled = async (worker) => {
-  const path = `workers/${worker}`
-  const conf = JSON.parse(await fs.readFile(`${path}/conf.json`, 'utf8'))
+const removePidFile = async (workerPath) => {
+  await fs.unlink(`${workerPath}/pid`)
+}
+
+const isWorkerEnabled = async (workerPath) => {
+  const conf = JSON.parse(await fs.readFile(`${workerPath}/conf.json`, 'utf8'))
   return conf.enabled
 }
 
@@ -46,12 +25,10 @@ const isProcessActive = async (pid) => {
   return processList[pid] ? true : false
 }
 
-const runWorker = async(worker) => {
-  const path = `workers/${worker}`
-  const workerFile = `${path}/worker.js`
-  const logFile = await fs.open(`${path}/worker.log`, 'a')
+const startWorker = async(workerPath) => {
+  const logFile = await fs.open(`${workerPath}/worker.log`, 'a')
 
-  const child = spawn('node', [workerFile], {
+  const child = spawn('node', [`${workerPath}/worker.js`], {
     detached: true,
     stdio: ['ignore', logFile.fd, logFile.fd],
   })
@@ -64,9 +41,7 @@ const runWorker = async(worker) => {
   return pid
 }
 
-const runWorkerIfNotActive = async (worker, pid) => {
-
-  const path = `workers/${worker}`
+const startWorkerIfInactive = async (workerPath, pid) => {
 
   if (pid) {
     let str = `pid [${pid}]`
@@ -74,34 +49,33 @@ const runWorkerIfNotActive = async (worker, pid) => {
     if (await isProcessActive(pid)) {
       str += ` active`
     } else {
-      str += ` not active. start [${worker}]`
+      str += ` not active. start [${workerPath}]`
 
-      const newPid = await runWorker(worker)
+      const newPid = await startWorker(workerPath)
       str += ` pid [${newPid}] started`
-      await fs.writeFile(`${path}/pid`, newPid)
+      await fs.writeFile(`${workerPath}/pid`, String(newPid))
     }
 
     log(str)
     return
   }
 
-  log(`pid not found. start [${worker}]`)
-  const newPid = await runWorker(worker)
+  log(`pid not found. start [${workerPath}]`)
+  const newPid = await startWorker(workerPath)
   log(` pid [${newPid}]`)
-  await fs.writeFile(`${path}/pid`, newPid)
+  await fs.writeFile(`${workerPath}/pid`, String(newPid))
 }
 
-const stopWorkerIfActive = async (worker, pid) => {
+const stopWorkerIfActive = async (workerPath, pid) => {
   if (!pid) {
-    log(`pid not found. ok`)
+    log(`pid not found`)
     return
   }
 
-  const path = `workers/${worker}`
-
   let processIsActive = await isProcessActive(pid)
   if (!processIsActive) {
-    log(`proc [${pid}] not active. ok`)
+    log(`proc [${pid}] not active`)
+    await removePidFile(workerPath)
     return
   }
 
@@ -111,44 +85,42 @@ const stopWorkerIfActive = async (worker, pid) => {
   processIsActive = await isProcessActive(pid)
   if (!processIsActive) {
     log(`proc [${pid}] stopped`)
-    await fs.unlink(`${path}/pid`)
+    await removePidFile(workerPath)
     log(`remove pid [${pid}]`)
     return
   }
 }
 
-const processWorker = async (worker) => {
-  log(`[${worker}] worker`)
+const processWorker = async (workersPath, worker) => {
 
-  const enabled = await isWorkerEnabled(worker)
-  const pid = await getWorkerPid(worker)
-
-  if (enabled) {
-    log(`is enabled`)
-    await runWorkerIfNotActive(worker, pid)
-    log('\n', true)
-    return
-  }
-
-  log(`is disabled`)
-  await stopWorkerIfActive(worker, pid)
+  const workerPath = `${workersPath}/${worker}`
+  const enabled = await isWorkerEnabled(workerPath)
+  const pid = await getWorkerPid(workerPath)
   
-  log('\n', true)
-}
-
-const processWorkers = async () => {
-  const workers = await fs.readdir('workers')
-  for (const worker of workers) {
-    await processWorker(worker)
+  if (enabled) {
+    log(`[${worker}] enabled`)
+    await startWorkerIfInactive(workerPath, pid)
+  } else {
+    log(`[${worker}] disabled`)
+    await stopWorkerIfActive(workerPath, pid)  
   }
 }
 
-while (true) {
-  await processWorkers()
-  await wait(4000)
+const processWorkers = async (workersPath) => {
+  const workers = await fs.readdir(workersPath)
+  for (const worker of workers) {
+    await processWorker(workersPath, worker)
+  }
 }
 
-//const list = await processList()
-//console.log(list)
+export const createWorkerManager = (workersPath) => {
 
-//processKill(12345)
+  const start = async() => {
+    while (true) {
+      await processWorkers(workersPath)
+      await wait(4000)
+    }
+  }
+
+  return { start }
+}

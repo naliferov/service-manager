@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 
 export const log = (msg, addTime = false) => {
   const str = addTime ? `${getTime()} ${msg}` : msg
@@ -60,3 +62,7 @@ export const processKill = (pid) => {
 }
 
 export const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+export const getDirname = (metaUrl) => {
+  return path.dirname(fileURLToPath(metaUrl))
+}
