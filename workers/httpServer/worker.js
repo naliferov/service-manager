@@ -7,7 +7,7 @@ const currentDir = getDirname(import.meta.url)
 
 const server = http.createServer(async(req, res) => {
   const url = req.url
-
+  
   if (url === '/') {
     const html = await fs.readFile(`${currentDir}/index.html`, 'utf8')
     res.writeHead(200, { 'Content-Type': 'text/html' }).end(html)
