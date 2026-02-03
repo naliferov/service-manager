@@ -389,18 +389,7 @@ window.addEventListener('click', (e) =&gt; {
   })
 }</div></div></div>
 
-    <script>
-      window.saveHtml = () => {
-        const html = '<!DOCTYPE html>' + document.documentElement.outerHTML
-        fetch('/save', { method: 'POST', body: html })
-      }
-
-      const saveBtn = document.getElementById('save')
-      saveBtn.addEventListener('click', saveHtml)
-
-      const initScript = document.getElementById('init-script')
-      eval(initScript.textContent)
-    </script>
+    
 <div class="frame row space" style="
     background: #fffdf8;
     position: relative;
@@ -408,14 +397,15 @@ window.addEventListener('click', (e) =&gt; {
     min-width: 100vw;
 ">
 
-    <div class="frame row" style="
+    <div>Space of nodes</div><div class="frame row" style="
     left: 28px;
     position: relative;
+    top: 67px;
 ">
-<div class="in">
+<div>jsonGenerator</div><div class="in">
   <div>in</div>
   <div>
-  <div class="msg">{ "foo": "bar" }</div>
+  <div class="msg">msg...</div>
 <div class="msg">{ "foo": "bar" }</div></div>
 </div><div contenteditable="plaintext-only" style="
     font-family: monospace;
@@ -428,9 +418,9 @@ window.addEventListener('click', (e) =&gt; {
 <div class="msg">{ "foo": "processed" }</div></div>
 </div>
 </div><div class="frame row" style="
-    left: 85px;
+    left: 28px;
     position: absolute;
-    top: 123px;
+    top: 219px;
 ">
 <div class="in">
   <div>in</div>
@@ -447,4 +437,15 @@ window.addEventListener('click', (e) =&gt; {
   <div class="msg">{ "foo": "processed" }</div>
 <div class="msg">{ "foo": "processed" }</div></div>
 </div>
-</div></div></body></html>
+</div><script>
+      window.saveHtml = () => {
+        const html = '<!DOCTYPE html>' + document.documentElement.outerHTML
+        fetch('/save', { method: 'POST', body: html })
+      }
+
+      const saveBtn = document.getElementById('save')
+      saveBtn.addEventListener('click', saveHtml)
+
+      const initScript = document.getElementById('init-script')
+      eval(initScript.textContent)
+    </script></div></body></html>
