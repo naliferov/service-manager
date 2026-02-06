@@ -1,4 +1,4 @@
-import { createWorkerManager } from './worker-manager.js'
+import { createWorkerManager } from './supervisor.js'
 import { rm, mkdtemp } from 'node:fs/promises'
 
 //const workersPath = './test/fixtures/workers'

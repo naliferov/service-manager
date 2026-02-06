@@ -1,4 +1,4 @@
-import { createWorkerManager } from './worker-manager.js'
+import { createWorkerManager } from './src/worker-manager.js'
 
 const [command, ...args] = process.argv.slice(2)
 
@@ -14,6 +14,7 @@ const exec = commands[command]
 if (!exec) {
   console.error('Usage: node cli.js <command> [args...]')
   console.error('Commands: start-worker-manager')
+  process.exit(1)
 }
 
 exec(...args)
