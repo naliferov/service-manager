@@ -1,22 +1,25 @@
 import fs from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { getProcessList, processKill, wait, getTime, log } from './utils.js'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const getWorkerPid = async (workerPath) => {
+
+const getServicePid = async (servicePath) => {
   try {
-    const pid = await fs.readFile(`${workerPath}/pid`, 'utf8')
+    const pid = await fs.readFile(`${servicePath}/pid`, 'utf8')
     if (pid) return pid.trim()
   } catch (error) {
     if (error.code !== 'ENOENT') throw error
   }
 }
 
-const removePidFile = async (workerPath) => {
-  await fs.unlink(`${workerPath}/pid`)
+const removePidFile = async (servicePath) => {
+  await fs.unlink(`${servicePath}/pid`)
 }
 
-const isWorkerEnabled = async (workerPath) => {
-  const conf = JSON.parse(await fs.readFile(`${workerPath}/conf.json`, 'utf8'))
+const isServiceEnabled = async (servicePath) => {
+  const conf = JSON.parse(await fs.readFile(`${servicePath}/service.json`, 'utf8'))
   return conf.enabled
 }
 
@@ -25,10 +28,10 @@ const isProcessActive = async (pid) => {
   return processList[pid] ? true : false
 }
 
-const startWorker = async(workerPath) => {
-  const logFile = await fs.open(`${workerPath}/worker.log`, 'a')
+const startService = async(servicePath) => {
+  const logFile = await fs.open(`${servicePath}/service.log`, 'a')
 
-  const child = spawn('node', [`${workerPath}/worker.js`], {
+  const child = spawn('node', [`${servicePath}/service.js`], {
     detached: true,
     stdio: ['ignore', logFile.fd, logFile.fd],
   })
@@ -41,32 +44,32 @@ const startWorker = async(workerPath) => {
   return pid
 }
 
-const startWorkerIfInactive = async (workerPath, pid) => {
+const startServiceIfInactive = async (servicePath, pid) => {
 
   if (pid) {
-    let str = `pid [${pid}]`
+    let str = `service [${pid}]`
 
     if (await isProcessActive(pid)) {
       str += ` active`
     } else {
-      str += ` not active. start [${workerPath}]`
+      str += ` not active. start [${servicePath}]`
 
-      const newPid = await startWorker(workerPath)
+      const newPid = await startService(servicePath)
       str += ` pid [${newPid}] started`
-      await fs.writeFile(`${workerPath}/pid`, String(newPid))
+      await fs.writeFile(`${servicePath}/pid`, String(newPid))
     }
 
     log(str)
     return
   }
 
-  log(`pid not found. start [${workerPath}]`)
-  const newPid = await startWorker(workerPath)
+  log(`pid not found. start [${servicePath}]`)
+  const newPid = await startService(servicePath)
   log(` pid [${newPid}]`)
-  await fs.writeFile(`${workerPath}/pid`, String(newPid))
+  await fs.writeFile(`${servicePath}/pid`, String(newPid))
 }
 
-const stopWorkerIfActive = async (workerPath, pid) => {
+const stopServiceIfActive = async (servicePath, pid) => {
   if (!pid) {
     log(`pid not found`)
     return
@@ -75,7 +78,7 @@ const stopWorkerIfActive = async (workerPath, pid) => {
   let processIsActive = await isProcessActive(pid)
   if (!processIsActive) {
     log(`proc [${pid}] not active`)
-    await removePidFile(workerPath)
+    await removePidFile(servicePath)
     return
   }
 
@@ -85,39 +88,44 @@ const stopWorkerIfActive = async (workerPath, pid) => {
   processIsActive = await isProcessActive(pid)
   if (!processIsActive) {
     log(`proc [${pid}] stopped`)
-    await removePidFile(workerPath)
+    await removePidFile(servicePath)
     log(`remove pid [${pid}]`)
     return
   }
 }
 
-const processWorker = async (workersPath, worker) => {
+const processService = async (servicesPath, service) => {
 
-  const workerPath = `${workersPath}/${worker}`
-  const enabled = await isWorkerEnabled(workerPath)
-  const pid = await getWorkerPid(workerPath)
-  
+  const servicePath = `${servicesPath}/${service}`
+  const enabled = await isServiceEnabled(servicePath)
+  const pid = await getServicePid(servicePath)
+
   if (enabled) {
-    log(`[${worker}] enabled`)
-    await startWorkerIfInactive(workerPath, pid)
+    log(`[${service}] enabled`)
+    await startServiceIfInactive(servicePath, pid)
   } else {
-    log(`[${worker}] disabled`)
-    await stopWorkerIfActive(workerPath, pid)  
+    log(`[${service}] disabled`)
+    await stopServiceIfActive(servicePath, pid)  
   }
 }
 
-const processWorkers = async (workersPath) => {
-  const workers = await fs.readdir(workersPath)
-  for (const worker of workers) {
-    await processWorker(workersPath, worker)
+const processServices = async (servicesPath) => {
+
+  const services = await fs.readdir(servicesPath)
+  for (const service of services) {
+    await processService(servicesPath, service)
   }
 }
 
-export const createWorkerManager = (workersPath) => {
+export const createSupervisor = () => {
+
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const servicesPath = path.join(__dirname, '../services');
 
   const start = async() => {
     while (true) {
-      await processWorkers(workersPath)
+      await processServices(servicesPath)
       await wait(4000)
     }
   }

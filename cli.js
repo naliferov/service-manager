@@ -1,12 +1,11 @@
-import { createWorkerManager } from './src/worker-manager.js'
+import { createSupervisor } from './src/supervisor/supervisor.js'
 
 const [command, ...args] = process.argv.slice(2)
 
 const commands = {
-  'start-worker-manager': async (workersPath) => {
-      if (!workersPath) throw new Error('workersPath required')
-      const wm = createWorkerManager(workersPath)
-      await wm.start()
+  'start-supervisor': async () => {
+      const supervisor = createSupervisor()
+      await supervisor.start()
     },
 }
 
